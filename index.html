@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Learning Path — Python to AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12131e;
+    --surface:#1a1c2c;
+    --surface-2:#212339;
+    --line:#31324a;
+    --line-soft:#26273c;
+    --indigo:#7b7fd1;
+    --indigo-dim:#4d4f78;
+    --copper:#e08a52;
+    --copper-dim:#7a5033;
+    --copper-glow: rgba(224,138,82,0.35);
+    --text:#eae8f4;
+    --text-mid:#a9a6c4;
+    --text-dim:#6f6c8e;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse 900px 500px at 15% -10%, rgba(123,127,209,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 100% 10%, rgba(224,138,82,0.07), transparent 55%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Inter', system-ui, sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+  .wrap{max-width:920px;margin:0 auto;padding:36px 20px 80px;}
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; flex-direction:column; gap:22px;
+    margin-bottom:34px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono', monospace;
+    font-size:12px; letter-spacing:0.14em; text-transform:uppercase;
+    color:var(--copper); display:flex; align-items:center; gap:8px;
+  }
+  .eyebrow::before{content:''; width:6px;height:6px;border-radius:50%;background:var(--copper); box-shadow:0 0 8px var(--copper-glow);}
+  h1{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600; font-size:clamp(28px,4.4vw,40px);
+    margin:0; letter-spacing:-0.01em; line-height:1.08;
+  }
+  .sub{color:var(--text-mid); font-size:15px; line-height:1.55; max-width:60ch; margin:0;}
+
+  .stats-row{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1px;
+    background:var(--line-soft); border:1px solid var(--line-soft); border-radius:var(--radius);
+    overflow:hidden;
+  }
+  .stat{
+    background:var(--surface); padding:16px 18px;
+    display:flex; flex-direction:column; gap:4px;
+  }
+  .stat .num{font-family:'JetBrains Mono',monospace; font-size:22px; font-weight:600; color:var(--text);}
+  .stat .lbl{font-size:11.5px; color:var(--text-dim); letter-spacing:0.04em; text-transform:uppercase;}
+  .stat.copper .num{color:var(--copper);}
+
+  .overall-bar{
+    height:6px; border-radius:99px; background:var(--surface-2); overflow:hidden;
+    border:1px solid var(--line-soft);
+  }
+  .overall-fill{
+    height:100%; border-radius:99px;
+    background:linear-gradient(90deg, var(--indigo), var(--copper));
+    transition:width .5s cubic-bezier(.4,0,.2,1);
+  }
+
+  /* ---------- Up next card ---------- */
+  .upnext{
+    display:flex; align-items:center; gap:14px;
+    background:linear-gradient(135deg, rgba(224,138,82,0.10), rgba(123,127,209,0.06));
+    border:1px solid var(--copper-dim); border-radius:var(--radius);
+    padding:14px 18px; margin-bottom:8px; cursor:pointer;
+    transition:border-color .2s;
+  }
+  .upnext:hover{border-color:var(--copper);}
+  .upnext .dot{
+    width:9px;height:9px;border-radius:50%;background:var(--copper);flex:none;
+    box-shadow:0 0 0 4px var(--copper-glow);
+    animation:pulse 2.2s ease-in-out infinite;
+  }
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 4px var(--copper-glow);}50%{box-shadow:0 0 0 7px rgba(224,138,82,0.12);}}
+  .upnext .body{flex:1; min-width:0;}
+  .upnext .tag{font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--copper); text-transform:uppercase; letter-spacing:0.08em;}
+  .upnext .task{font-size:14.5px; color:var(--text); margin-top:2px;}
+  .upnext .arrow{color:var(--text-dim); font-size:18px;}
+  .upnext.done{background:var(--surface); border-color:var(--line);}
+  .upnext.done .dot{background:var(--indigo); animation:none; box-shadow:none;}
+  .upnext.done .tag{color:var(--indigo);}
+
+  /* ---------- Timeline ---------- */
+  .timeline{position:relative;}
+  .stage{
+    position:relative;
+    display:grid;
+    grid-template-columns:44px 1fr;
+    gap:16px;
+  }
+  .rail{
+    position:relative;
+    display:flex; flex-direction:column; align-items:center;
+  }
+  .rail .line{
+    position:absolute; top:0; bottom:0; left:50%; transform:translateX(-50%);
+    width:2px; background:var(--line);
+  }
+  .stage:first-child .rail .line-top{display:none;}
+  .stage:last-child .rail .line-bot{display:none;}
+  .rail .line-top{top:0; height:22px;}
+  .rail .line-bot{top:22px; bottom:0;}
+  .rail .line.filled{background:linear-gradient(var(--copper), var(--copper));}
+
+  .node{
+    width:44px;height:44px;border-radius:50%;
+    background:var(--surface); border:2px solid var(--line);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'JetBrains Mono',monospace; font-weight:600; font-size:13px;
+    color:var(--text-dim); flex:none; z-index:1;
+    transition:all .25s;
+  }
+  .stage.complete .node{
+    background:var(--copper); border-color:var(--copper); color:#1a0f06;
+  }
+  .stage.active .node{
+    border-color:var(--copper); color:var(--copper);
+    box-shadow:0 0 0 4px var(--copper-glow);
+  }
+  .stage.locked .node{opacity:0.45;}
+
+  .card{
+    background:var(--surface); border:1px solid var(--line-soft); border-radius:var(--radius);
+    margin-bottom:14px; overflow:hidden;
+    transition:border-color .2s;
+  }
+  .stage.active .card{border-color:var(--copper-dim);}
+  .card-head{
+    padding:14px 18px; display:flex; align-items:center; gap:12px; cursor:pointer;
+    user-select:none;
+  }
+  .card-head:hover{background:var(--surface-2);}
+  .card-head .titles{flex:1; min-width:0;}
+  .card-head .stage-label{
+    font-family:'JetBrains Mono',monospace; font-size:10.5px; color:var(--text-dim);
+    letter-spacing:0.08em; text-transform:uppercase; margin-bottom:2px;
+  }
+  .card-head h3{
+    margin:0; font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16.5px; color:var(--text);
+  }
+  .stage.complete .card-head h3{color:var(--text-mid); text-decoration:line-through; text-decoration-color:var(--line); text-decoration-thickness:1.5px;}
+  .card-head .mini-progress{
+    width:70px; height:4px; border-radius:99px; background:var(--surface-2); overflow:hidden; flex:none;
+    display:none;
+  }
+  @media(min-width:520px){.card-head .mini-progress{display:block;}}
+  .card-head .mini-fill{height:100%; background:var(--copper); border-radius:99px; transition:width .4s;}
+  .card-head .pct{font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim); flex:none; width:34px; text-align:right;}
+  .card-head .chev{color:var(--text-dim); flex:none; transition:transform .2s; font-size:13px;}
+  .stage.open .chev{transform:rotate(90deg);}
+
+  .card-body{
+    max-height:0; overflow:hidden; transition:max-height .3s ease;
+  }
+  .stage.open .card-body{max-height:1400px;}
+  .card-body-inner{padding:0 18px 18px;}
+  .why{font-size:13.5px; color:var(--text-mid); line-height:1.55; margin:0 0 14px; padding-top:2px; border-top:1px solid var(--line-soft); padding-top:14px;}
+
+  .tasks{display:flex; flex-direction:column; gap:2px;}
+  .task{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:8px 6px; border-radius:8px; cursor:pointer;
+  }
+  .task:hover{background:var(--surface-2);}
+  .task input{display:none;}
+  .box{
+    width:18px;height:18px;border-radius:5px;border:1.5px solid var(--line);
+    flex:none; margin-top:1px;
+    display:flex; align-items:center; justify-content:center;
+    transition:all .15s;
+  }
+  .task input:checked ~ .box{background:var(--copper); border-color:var(--copper);}
+  .box svg{width:11px;height:11px;opacity:0; transition:opacity .1s;}
+  .task input:checked ~ .box svg{opacity:1;}
+  .task-label{font-size:14px; color:var(--text); line-height:1.4;}
+  .task input:checked ~ .task-label{color:var(--text-dim); text-decoration:line-through; text-decoration-color:var(--line);}
+
+  .meta-row{
+    display:flex; flex-wrap:wrap; gap:8px; margin-top:14px;
+  }
+  .chip{
+    font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--text-mid);
+    background:var(--surface-2); border:1px solid var(--line-soft); border-radius:99px;
+    padding:4px 10px;
+  }
+  .links{margin-top:12px; display:flex; flex-direction:column; gap:6px;}
+  .links a{
+    font-size:13px; color:var(--indigo); text-decoration:none; display:flex; gap:6px; align-items:center;
+  }
+  .links a:hover{color:var(--copper);}
+  .links a::before{content:'→'; color:var(--text-dim); font-size:12px;}
+
+  .mark-all{
+    margin-top:14px; font-family:'JetBrains Mono',monospace; font-size:11.5px;
+    background:transparent; border:1px solid var(--line); color:var(--text-mid);
+    padding:7px 12px; border-radius:8px; cursor:pointer; letter-spacing:0.03em;
+  }
+  .mark-all:hover{border-color:var(--copper); color:var(--copper);}
+
+  footer{
+    margin-top:40px; text-align:center; font-size:12px; color:var(--text-dim);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .reset-btn{
+    background:none; border:none; color:var(--text-dim); text-decoration:underline;
+    cursor:pointer; font-family:inherit; font-size:inherit; padding:0;
+  }
+  .reset-btn:hover{color:var(--copper);}
+
+  ::selection{background:var(--copper-glow);}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">Your build path</div>
+    <h1>Python → DSA → ML → Deep Learning → AI</h1>
+    <p class="sub">Fifteen stages, in the order they actually depend on each other. Check things off as you genuinely finish them — not as you skim them. Progress is saved automatically.</p>
+
+    <div class="stats-row">
+      <div class="stat"><div class="num" id="statStages">0 / 15</div><div class="lbl">Stages complete</div></div>
+      <div class="stat"><div class="num" id="statTasks">0 / 0</div><div class="lbl">Tasks checked</div></div>
+      <div class="stat copper"><div class="num" id="statPct">0%</div><div class="lbl">Overall progress</div></div>
+    </div>
+    <div class="overall-bar"><div class="overall-fill" id="overallFill" style="width:0%"></div></div>
+  </header>
+
+  <div class="upnext" id="upNext"></div>
+
+  <div class="timeline" id="timeline"></div>
+
+  <footer>
+    saved to this browser's storage &nbsp;·&nbsp; <button class="reset-btn" id="resetBtn">reset all progress</button>
+  </footer>
+
+</div>
+
+<script>
+const STAGES = [
+  {
+    id:0, label:"Stage 0", title:"AI Usage Ground Rules", why:"Read once before anything else — it applies to every stage below. Short version: the earlier the stage, the less AI should touch your keyboard.",
+    time:"10 min", links:[],
+    tasks:[
+      "I understand: don't let AI write beginner projects (Stages 1–6)",
+      "I understand: use AI to explain errors and concepts, not to solve problems for me",
+      "I understand: AI use increases naturally from Stage 9 onward",
+      "I can explain, out loud, any code I submit — with or without AI's help"
+    ]
+  },
+  {
+    id:1, label:"Stage 1", title:"Python Fundamentals", why:"Consolidating what you already know — variables, conditionals, loops, functions, basic I/O — until it's fully solid, not shaky.",
+    time:"3–5 weeks",
+    links:[{t:"CS50P — Harvard", u:"https://cs50.harvard.edu/python/"},{t:"Automate the Boring Stuff (backup)", u:"https://automatetheboringstuff.com/"}],
+    tasks:[
+      "Comfortable with variables, data types, and f-strings",
+      "Comfortable with if/else and both loop types",
+      "Comfortable with lists, tuples, dicts, sets",
+      "Can write basic functions with return values",
+      "Can handle basic errors with try/except",
+      "Built: calculator, guessing game, to-do list (CLI)",
+      "Milestone: wrote a 50–100 line program from scratch, no reference"
+    ]
+  },
+  {
+    id:2, label:"Stage 2", title:"Problem Solving & Logic", why:"The actual skill that separates 'knows syntax' from 'can build things.' Learn to plan on paper before typing.",
+    time:"2–4 weeks (ongoing)",
+    links:[{t:"HackerRank Python Basic track", u:"https://www.hackerrank.com/domains/python"},{t:"Codewars (8kyu–6kyu only)", u:"https://www.codewars.com/"}],
+    tasks:[
+      "Can write pseudocode before coding a new problem",
+      "Comfortable with pattern-printing problems (triangles, pyramids)",
+      "Understand basic recursion (factorial, Fibonacci)",
+      "Built: text adventure game, file-based expense tracker",
+      "Milestone: solve a new logic problem without seeing a similar example first"
+    ]
+  },
+  {
+    id:3, label:"Stage 3", title:"Intermediate Python", why:"Where Python stops being toy programs. File handling and APIs unlock genuinely useful tools.",
+    time:"4–6 weeks",
+    links:[{t:"Corey Schafer — Python playlist", u:"https://www.youtube.com/@coreyms"},{t:"Real Python (backup)", u:"https://realpython.com/"}],
+    tasks:[
+      "Comfortable reading/writing files (txt, csv, json)",
+      "Comfortable with pip and virtual environments",
+      "Can use list/dict comprehensions and lambdas",
+      "Can call a real API with `requests` and handle failures",
+      "Built: weather app (real API), CSV record manager, simple scraper",
+      "Milestone: call an API and handle a bad response gracefully"
+    ]
+  },
+  {
+    id:4, label:"Stage 4", title:"Object-Oriented Programming", why:"Almost every serious codebase — including ML libraries like PyTorch — is built with classes. You can't read real code without this.",
+    time:"3–5 weeks",
+    links:[{t:"Corey Schafer — OOP series", u:"https://www.youtube.com/@coreyms"},{t:"Python Crash Course (book, backup)", u:"https://ehmatthes.github.io/pcc/"}],
+    tasks:[
+      "Comfortable with classes, __init__, self, instance vs class vars",
+      "Understand inheritance, polymorphism, super()",
+      "Know dunder methods (__str__, __repr__, __eq__)",
+      "Can explain inheritance vs. composition with an example",
+      "Built: Library system, bank account simulator, text RPG",
+      "Milestone: design a 3–4 class system on paper before coding it"
+    ]
+  },
+  {
+    id:5, label:"Stage 5", title:"Data Structures & Algorithms", why:"The single biggest jump in programmer maturity — and the mental muscle you'll need to read ML/DL code later.",
+    time:"8–14 weeks (longest stage — don't rush)",
+    links:[{t:"NeetCode 150", u:"https://neetcode.io/"},{t:"Grokking Algorithms (book, backup)", u:"https://www.manning.com/books/grokking-algorithms"}],
+    tasks:[
+      "Comfortable with Big-O notation",
+      "Comfortable with arrays, strings, hashmaps",
+      "Understand stacks, queues, linked lists",
+      "Understand trees / BSTs and basic graph traversal (BFS/DFS)",
+      "Comfortable with recursion in depth",
+      "Aware of basic dynamic programming (concept, a few classic problems)",
+      "Milestone: solve most LeetCode Easy array/hashmap problems in 20–30 min unaided"
+    ]
+  },
+  {
+    id:6, label:"Stage 6", title:"Advanced Python", why:"What separates student code from professional code — and prepares you to read library source (decorators/generators are everywhere in PyTorch).",
+    time:"4–6 weeks",
+    links:[{t:"Real Python — Advanced articles", u:"https://realpython.com/tutorials/advanced/"},{t:"Learn Git Branching", u:"https://learngitbranching.js.org/"}],
+    tasks:[
+      "Can write a decorator from scratch",
+      "Understand generators/iterators vs. lists",
+      "Comfortable with context managers (with)",
+      "Comfortable with git: commit, branch, merge, push/pull",
+      "Can write basic unit tests with pytest",
+      "Built: CLI tool with argparse + logging, package with README + tests",
+      "Milestone: refactor an old project with proper error handling + tests"
+    ]
+  },
+  {
+    id:7, label:"Stage 7", title:"Mathematics for ML", why:"You already have the physics/maths background — this is the ML-specific translation of it: linear algebra, calculus, probability.",
+    time:"3–5 weeks (parallel with Stage 6/8)",
+    links:[{t:"3Blue1Brown — Essence of Linear Algebra", u:"https://www.youtube.com/playlist?list=PLZHQObOWTQDPD3MizzM2xVFitgF8hE_ab"},{t:"StatQuest (probability/stats)", u:"https://www.youtube.com/@statquest"}],
+    tasks:[
+      "Comfortable with vectors, matrices, matrix multiplication, dot product",
+      "Comfortable with derivatives, partial derivatives, chain rule",
+      "Understand gradient descent geometrically",
+      "Understand basic probability, distributions, Bayes' theorem conceptually",
+      "Milestone: explain the chain rule's link to backpropagation in your own words"
+    ]
+  },
+  {
+    id:8, label:"Stage 8", title:"NumPy / Pandas / Matplotlib", why:"The toolkit every ML/DL library sits on top of. Can't skip straight to scikit-learn without this.",
+    time:"3–4 weeks",
+    links:[{t:"Kaggle Learn — Pandas + Data Viz", u:"https://www.kaggle.com/learn"},{t:"NumPy — Absolute Beginners guide", u:"https://numpy.org/doc/stable/user/absolute_beginners.html"}],
+    tasks:[
+      "Comfortable with NumPy arrays and vectorized operations",
+      "Comfortable with Pandas DataFrames: filter, group, merge",
+      "Can handle missing/duplicate data",
+      "Can build basic plots (line, bar, scatter, histogram)",
+      "Built: EDA notebook on Titanic dataset, data-cleaning script",
+      "Milestone: clean a messy real dataset without looking up every function"
+    ]
+  },
+  {
+    id:9, label:"Stage 9", title:"Machine Learning Fundamentals", why:"The actual entry point into ML. Everything before this was preparation — go slow here.",
+    time:"6–10 weeks",
+    links:[{t:"Andrew Ng — Machine Learning Specialization", u:"https://www.coursera.org/specializations/machine-learning-introduction"},{t:"Google ML Crash Course (backup)", u:"https://developers.google.com/machine-learning/crash-course"}],
+    tasks:[
+      "Understand supervised vs. unsupervised learning",
+      "Understand train/test splits and why they matter",
+      "Comfortable with linear regression and logistic regression",
+      "Understand cost functions and gradient descent in code",
+      "Can explain overfitting vs. underfitting",
+      "Know precision/recall/RMSE and when to use which",
+      "Built: house price predictor, Titanic classifier, spam classifier",
+      "Milestone: explain gradient descent to a non-technical friend"
+    ]
+  },
+  {
+    id:10, label:"Stage 10", title:"Intermediate / Advanced ML", why:"From 'did the tutorial' to 'can handle a messy real dataset and pick the right tool.'",
+    time:"6–8 weeks",
+    links:[{t:"StatQuest — Random Forests / XGBoost / PCA", u:"https://www.youtube.com/@statquest"},{t:"Hands-On ML (book, backup)", u:"https://github.com/ageron/handson-ml3"}],
+    tasks:[
+      "Understand decision trees, random forests, gradient boosting",
+      "Understand k-NN and k-means clustering",
+      "Understand PCA / dimensionality reduction conceptually",
+      "Comfortable with feature engineering and cross-validation",
+      "Know how to handle imbalanced data",
+      "Built: ensemble-improved Titanic/house-price project, clustering project",
+      "Milestone: compare 3–4 models on one problem and justify your pick"
+    ]
+  },
+  {
+    id:11, label:"Stage 11", title:"Deep Learning", why:"The foundation for everything modern in AI — vision, LLMs, generative models all sit on top of this.",
+    time:"8–12 weeks",
+    links:[{t:"fast.ai — Practical Deep Learning", u:"https://course.fast.ai/"},{t:"DeepLearning.AI Specialization (backup)", u:"https://www.coursera.org/specializations/deep-learning"}],
+    tasks:[
+      "Understand forward/backward propagation conceptually",
+      "Know common activation functions and loss functions",
+      "Comfortable building a basic network in PyTorch",
+      "Understand CNNs (images) at a working level",
+      "Aware of RNNs/LSTMs conceptually",
+      "Know dropout / batch norm / transfer learning basics",
+      "Built: MNIST digit classifier, transfer-learning image classifier",
+      "Milestone: build and train a small network without copying a tutorial verbatim"
+    ]
+  },
+  {
+    id:12, label:"Stage 12", title:"Modern AI / LLMs", why:"Directly relevant to what's happening in the industry now — and to your own MMMUT ERP chat widget.",
+    time:"6–10 weeks",
+    links:[{t:"Karpathy — Neural Networks: Zero to Hero", u:"https://www.youtube.com/playlist?list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ"},{t:"Hugging Face NLP Course (backup)", u:"https://huggingface.co/learn/nlp-course"}],
+    tasks:[
+      "Understand tokenization and embeddings",
+      "Understand attention / self-attention conceptually",
+      "Know the difference between pretraining, fine-tuning, and RLHF (high level)",
+      "Comfortable calling an LLM API in code",
+      "Understand RAG and when to use it vs. fine-tuning",
+      "Built: RAG Q&A tool over your own documents",
+      "Milestone: explain when to use prompting vs. RAG vs. fine-tuning"
+    ]
+  },
+  {
+    id:13, label:"Stage 13", title:"AI Projects (Portfolio)", why:"Combine everything into 2–3 substantial, well-documented projects rather than learning new concepts.",
+    time:"8+ weeks per project",
+    links:[],
+    tasks:[
+      "Ship a full-stack AI app (web + backend + LLM integration)",
+      "Ship an end-to-end ML pipeline (data → training → deployed API)",
+      "Optional: computer vision project (e.g. attendance via face recognition)",
+      "Upgrade the MMMUT Help AI widget with RAG over real syllabus/attendance data",
+      "Every project has a README you'd be comfortable showing in an interview"
+    ]
+  },
+  {
+    id:14, label:"Stage 14", title:"Advanced Topics", why:"Optional, pick based on interest — RL, MLOps, computer vision, NLP specialization, or research papers.",
+    time:"ongoing / open-ended",
+    links:[{t:"Hugging Face — Deep RL Course", u:"https://huggingface.co/learn/deep-rl-course"},{t:"Made With ML (MLOps)", u:"https://madewithml.com/"}],
+    tasks:[
+      "Pick one specialization direction and state why",
+      "Read and summarize one real paper in your own words",
+      "Try reproducing a small result from a paper or course"
+    ]
+  }
+];
+
+let progress = {}; // { stageId: { taskIndex: true } }
+let saveTimer = null;
+
+async function loadProgress(){
+  try{
+    const res = await window.storage.get('roadmap-progress');
+    if(res && res.value){ progress = JSON.parse(res.value); }
+  }catch(e){ /* no saved data yet */ }
+  render();
+}
+
+function saveProgress(){
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async ()=>{
+    try{ await window.storage.set('roadmap-progress', JSON.stringify(progress)); }
+    catch(e){ console.error('save failed', e); }
+  }, 250);
+}
+
+function isTaskDone(stageId, idx){
+  return !!(progress[stageId] && progress[stageId][idx]);
+}
+function toggleTask(stageId, idx){
+  if(!progress[stageId]) progress[stageId] = {};
+  progress[stageId][idx] = !progress[stageId][idx];
+  saveProgress();
+  render();
+}
+function stageCounts(stage){
+  const done = stage.tasks.filter((_,i)=>isTaskDone(stage.id,i)).length;
+  return { done, total: stage.tasks.length };
+}
+function stageComplete(stage){
+  const {done,total} = stageCounts(stage);
+  return total>0 && done===total;
+}
+
+let openStageId = null;
+
+function markAll(stageId){
+  const stage = STAGES.find(s=>s.id===stageId);
+  const {done,total} = stageCounts(stage);
+  const setTo = done<total;
+  progress[stageId] = {};
+  stage.tasks.forEach((_,i)=>{ progress[stageId][i] = setTo; });
+  saveProgress();
+  render();
+}
+
+function findUpNext(){
+  for(const stage of STAGES){
+    for(let i=0;i<stage.tasks.length;i++){
+      if(!isTaskDone(stage.id,i)) return {stage, idx:i};
+    }
+  }
+  return null;
+}
+
+function render(){
+  // stats
+  let totalTasks=0, doneTasks=0, doneStages=0;
+  STAGES.forEach(s=>{
+    const {done,total} = stageCounts(s);
+    totalTasks+=total; doneTasks+=done;
+    if(stageComplete(s)) doneStages++;
+  });
+  const pct = totalTasks ? Math.round((doneTasks/totalTasks)*100) : 0;
+  document.getElementById('statStages').textContent = `${doneStages} / ${STAGES.length}`;
+  document.getElementById('statTasks').textContent = `${doneTasks} / ${totalTasks}`;
+  document.getElementById('statPct').textContent = `${pct}%`;
+  document.getElementById('overallFill').style.width = pct+'%';
+
+  // up next
+  const next = findUpNext();
+  const upEl = document.getElementById('upNext');
+  if(next){
+    upEl.className = 'upnext';
+    upEl.innerHTML = `<div class="dot"></div><div class="body"><div class="tag">Up next · ${next.stage.title}</div><div class="task">${next.idx+1===1?'':''}${escapeHtml(next.stage.tasks[next.idx])}</div></div><div class="arrow">↳</div>`;
+    upEl.onclick = ()=>{ openStageId = next.stage.id; render(); document.getElementById('stage-card-'+next.stage.id)?.scrollIntoView({behavior:'smooth', block:'center'}); };
+  } else {
+    upEl.className = 'upnext done';
+    upEl.innerHTML = `<div class="dot"></div><div class="body"><div class="tag">All done</div><div class="task">Every task across all 15 stages is checked. Time to go build something real.</div></div>`;
+    upEl.onclick = null;
+  }
+
+  // timeline
+  const tl = document.getElementById('timeline');
+  tl.innerHTML = '';
+  let firstIncompleteFound = false;
+  STAGES.forEach((stage, idx)=>{
+    const {done,total} = stageCounts(stage);
+    const complete = stageComplete(stage);
+    let isActive = false;
+    if(!complete && !firstIncompleteFound){ isActive = true; firstIncompleteFound = true; }
+    const isOpen = openStageId === stage.id;
+
+    const el = document.createElement('div');
+    el.className = `stage ${complete?'complete':''} ${isActive?'active':''} ${isOpen?'open':''}`;
+    el.id = 'stage-card-'+stage.id;
+
+    const pct = total ? Math.round((done/total)*100) : 0;
+
+    el.innerHTML = `
+      <div class="rail">
+        <div class="line line-top ${idx>0 && (stageComplete(STAGES[idx-1])||complete) ? 'filled':''}"></div>
+        <div class="node">${complete ? checkSvg() : stage.id}</div>
+        <div class="line line-bot ${complete ? 'filled':''}"></div>
+      </div>
+      <div>
+        <div class="card">
+          <div class="card-head" data-toggle="${stage.id}">
+            <div class="titles">
+              <div class="stage-label">${stage.label} · ${stage.time}</div>
+              <h3>${stage.title}</h3>
+            </div>
+            <div class="mini-progress"><div class="mini-fill" style="width:${pct}%"></div></div>
+            <div class="pct">${done}/${total}</div>
+            <div class="chev">▸</div>
+          </div>
+          <div class="card-body">
+            <div class="card-body-inner">
+              <p class="why">${stage.why}</p>
+              <div class="tasks">
+                ${stage.tasks.map((t,i)=>`
+                  <label class="task" data-task="${stage.id}:${i}">
+                    <input type="checkbox" ${isTaskDone(stage.id,i)?'checked':''}/>
+                    <span class="box">${checkSvgInline()}</span>
+                    <span class="task-label">${escapeHtml(t)}</span>
+                  </label>
+                `).join('')}
+              </div>
+              ${stage.links.length ? `<div class="links">${stage.links.map(l=>`<a href="${l.u}" target="_blank" rel="noopener">${escapeHtml(l.t)}</a>`).join('')}</div>` : ''}
+              <div class="meta-row"><span class="chip">${done}/${total} tasks</span><span class="chip">${pct}% complete</span></div>
+              <button class="mark-all" data-markall="${stage.id}">${done===total && total>0 ? 'uncheck all' : 'mark all done'}</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    tl.appendChild(el);
+  });
+
+  // wire events
+  tl.querySelectorAll('[data-toggle]').forEach(elm=>{
+    elm.addEventListener('click', ()=>{
+      const id = Number(elm.getAttribute('data-toggle'));
+      openStageId = openStageId===id ? null : id;
+      render();
+    });
+  });
+  tl.querySelectorAll('[data-task]').forEach(elm=>{
+    elm.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const [sid,idx] = elm.getAttribute('data-task').split(':').map(Number);
+      toggleTask(sid, idx);
+      openStageId = sid;
+    });
+  });
+  tl.querySelectorAll('[data-markall]').forEach(elm=>{
+    elm.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      markAll(Number(elm.getAttribute('data-markall')));
+    });
+  });
+
+  // re-open the stage that was open (render rebuilds DOM, keep state)
+  if(openStageId!==null){
+    const openEl = document.getElementById('stage-card-'+openStageId);
+    if(openEl) openEl.classList.add('open');
+  }
+}
+
+function checkSvg(){
+  return `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="#1a0f06" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function checkSvgInline(){
+  return `<svg viewBox="0 0 16 16" fill="none"><path d="M3 8.5L6.2 11.5L13 4.5" stroke="#1a0f06" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+function escapeHtml(s){
+  const d = document.createElement('div'); d.textContent = s; return d.innerHTML;
+}
+
+document.getElementById('resetBtn').addEventListener('click', async ()=>{
+  if(!confirm('Reset all progress? This clears every checked task.')) return;
+  progress = {};
+  openStageId = null;
+  try{ await window.storage.set('roadmap-progress', JSON.stringify(progress)); }catch(e){}
+  render();
+});
+
+loadProgress();
+</script>
+</body>
+</html>
