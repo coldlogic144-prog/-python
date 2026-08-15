@@ -436,6 +436,9 @@
             color: var(--ink);
         }
         .btn-chess {
+            display: inline-flex;
+            align-items: center;
+            text-decoration: none;
             border: 1px solid var(--brass);
             background: var(--brass-soft);
             padding: 8px 16px;
@@ -2744,7 +2747,7 @@
                     🔔
                     <span class="badge-dot" id="notifBadge" style="display:none;">0</span>
                 </button>
-                <button class="btn-chess" onclick="toggleChessClub(true)">♟️ Chess Club</button>
+                <a class="btn-chess" href="chess/chess.html">♟️ Chess</a>
                 <div class="user-pill" onclick="openProfileModal()">
                     <div>
                         <div class="user-pill-name" id="pillName">—</div>
