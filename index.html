@@ -3019,12 +3019,13 @@
             deleteObject
         } from "firebase/storage";
 
+        // ===== FIREBASE APP CHECK =====
         import {
             initializeAppCheck,
             ReCaptchaEnterpriseProvider
         } from "firebase/app-check";
 
-        // ===== FIREBASE AI LOGIC – REPLACES VERTEX AI =====
+        // ===== FIREBASE AI =====
         import {
             getAI,
             getGenerativeModel,
@@ -3129,11 +3130,11 @@
         // Model IDs below are currently supported by Firebase AI Logic with the
         // Gemini Developer API (GoogleAIBackend). Names were verified against the
         // current official Gemini API model catalog:
-        //   - gemini-3.6-flash         (previous-generation Flash, stable)
-        //   - gemini-3.5-flash-lite    (fast / low-cost Flash-Lite, stable)
+        //   - gemini-2.5-flash-lite         (current default, fast / low-cost)
+        //   - gemini-2.5-flash              (fallback)
         // sendLedgerAIMessage() tries them in order and automatically falls back
         // to the next one if a model is not enabled for this Firebase project.
-        const AI_MODELS = ['gemini-3.6-flash', 'gemini-3.5-flash-lite'];
+        const AI_MODELS = ['gemini-2.5-flash-lite', 'gemini-2.5-flash'];
 
         let aiModels = [];
         let aiReady = false;
