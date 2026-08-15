@@ -3056,13 +3056,10 @@
         //    inside the isLocal branch below, so the production GitHub Pages
         //    build can never enter App Check debug mode.
         //
-        // ⚠️ ACTION REQUIRED: paste YOUR reCAPTCHA Enterprise SITE KEY into
-        //    RECAPTCHA_ENTERPRISE_SITE_KEY. It is the value shown in Google Cloud
-        //    → Security → reCAPTCHA Enterprise → your WEB key for
-        //    coldlogic144-prog.github.io (NOT the secret key, NOT a Gemini key).
-        //    Until this placeholder is replaced, App Check stays uninitialized
-        //    and Firebase AI Logic will reject every chat message.
-        const RECAPTCHA_ENTERPRISE_SITE_KEY = "REPLACE_WITH_RECAPTCHA_ENTERPRISE_SITE_KEY";
+        // reCAPTCHA Enterprise SITE KEY (public by design - NOT a secret, NOT a
+        // Gemini key). Configured for the GitHub Pages domain:
+        // coldlogic144-prog.github.io
+        const RECAPTCHA_ENTERPRISE_SITE_KEY = "6LdMyoYtAAAAACElgEbzVYEQRFYAWzLNLQRfPjGo";
 
         const isLocal =
             location.hostname === "localhost" ||
