@@ -2970,6 +2970,7 @@
                 "firebase/auth": "https://www.gstatic.com/firebasejs/12.17.1/firebase-auth.js",
                 "firebase/firestore": "https://www.gstatic.com/firebasejs/12.17.1/firebase-firestore.js",
                 "firebase/storage": "https://www.gstatic.com/firebasejs/12.17.1/firebase-storage.js",
+                "firebase/app-check": "https://www.gstatic.com/firebasejs/12.17.1/firebase-app-check.js",
                 "firebase/ai": "https://www.gstatic.com/firebasejs/12.17.1/firebase-ai.js"
             }
         }
@@ -3018,6 +3019,11 @@
             deleteObject
         } from "firebase/storage";
 
+        import {
+            initializeAppCheck,
+            ReCaptchaEnterpriseProvider
+        } from "firebase/app-check";
+
         // ===== FIREBASE AI LOGIC – REPLACES VERTEX AI =====
         import {
             getAI,
@@ -3036,6 +3042,53 @@
         };
 
         const firebaseApp = initializeApp(firebaseConfig);
+
+        // ===== FIREBASE APP CHECK =====
+        // Production (GitHub Pages): reCAPTCHA Enterprise provider.
+        // Localhost / 127.0.0.1 (VS Code Live Server): App Check Debug Provider.
+        // The debug token is ONLY ever set when isLocal is true, so the
+        // production GitHub Pages build can never enter App Check debug mode.
+        //
+        // !! REPLACE the placeholder below with the reCAPTCHA Enterprise SITE KEY
+        //    you created for the domain: coldlogic144-prog.github.io
+        //    (a site key is public by design - it is NOT an API key). !!
+        const RECAPTCHA_ENTERPRISE_SITE_KEY = "REPLACE_WITH_RECAPTCHA_ENTERPRISE_SITE_KEY";
+
+        const isLocal =
+            location.hostname === "localhost" ||
+            location.hostname === "127.0.0.1";
+
+        const siteKeyIsSet =
+            typeof RECAPTCHA_ENTERPRISE_SITE_KEY === "string" &&
+            RECAPTCHA_ENTERPRISE_SITE_KEY.length > 10 &&
+            !RECAPTCHA_ENTERPRISE_SITE_KEY.startsWith("REPLACE_WITH_");
+
+        if (!siteKeyIsSet) {
+            console.error(
+                'Ledger AI / App Check: reCAPTCHA Enterprise site key is not configured yet. ' +
+                'Add your site key (for coldlogic144-prog.github.io) to the ' +
+                'RECAPTCHA_ENTERPRISE_SITE_KEY constant above.'
+            );
+        } else if (isLocal) {
+            // Firebase App Check Debug Provider (development only). The SDK
+            // generates a debug token, logs it to the browser console, and uses
+            // it instead of reCAPTCHA. Register that token under
+            // Firebase Console → App Check → Apps → Manage debug tokens.
+            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+
+            initializeAppCheck(firebaseApp, {
+                provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
+                isTokenAutoRefreshEnabled: true
+            });
+        } else {
+            // Firebase App Check reCAPTCHA Enterprise provider (GitHub Pages
+            // production build).
+            initializeAppCheck(firebaseApp, {
+                provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
+                isTokenAutoRefreshEnabled: true
+            });
+        }
+
         const auth = getAuth(firebaseApp);
         const db = getFirestore(firebaseApp);
         const storage = getStorage(firebaseApp);
@@ -7823,7 +7876,7 @@
                 if (error.message) {
                     const msg = String(error.message);
                     if (/app.?check|attest|INVALID_APP_CREDENTIAL|UNAUTHENTICATED|UNAVAILABLE/i.test(msg)) {
-                        errorMsg = 'Ledger AI is temporarily unavailable. App Check rejected the request — register this app\'s debug token in the Firebase console (App Check) for localhost use.';
+                        errorMsg = 'App Check rejected the request. On GitHub Pages: confirm the reCAPTCHA Enterprise site key for this domain is configured in the Firebase console (App Check). On localhost: register the debug token shown in the browser console (Firebase Console → App Check → Manage debug tokens).';
                     } else if (/permission|auth|403|access denied/i.test(msg)) {
                         errorMsg =
                             'I don\'t have permission to access the AI service. Please check the "AI Logic" settings for this web app in the Firebase console and try again.';
