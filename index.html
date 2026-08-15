@@ -3044,14 +3044,24 @@
         const firebaseApp = initializeApp(firebaseConfig);
 
         // ===== FIREBASE APP CHECK =====
-        // Production (GitHub Pages): reCAPTCHA Enterprise provider.
-        // Localhost / 127.0.0.1 (VS Code Live Server): App Check Debug Provider.
-        // The debug token is ONLY ever set when isLocal is true, so the
-        // production GitHub Pages build can never enter App Check debug mode.
+        // ORDER: firebaseApp → initializeAppCheck → Auth / Firestore / Storage →
+        // Firebase AI Logic → generateContent(). App Check MUST be initialized
+        // before any AI request, or AI Logic enforcement rejects the call.
         //
-        // !! REPLACE the placeholder below with the reCAPTCHA Enterprise SITE KEY
-        //    you created for the domain: coldlogic144-prog.github.io
-        //    (a site key is public by design - it is NOT an API key). !!
+        // PRODUCTION (GitHub Pages, coldlogic144-prog.github.io):
+        //    reCAPTCHA Enterprise provider with the PUBLIC site key (site keys
+        //    are public by design - never use a secret or an API key here).
+        // LOCALHOST (VS Code Live Server):
+        //    Firebase App Check Debug Provider. The debug token is set ONLY
+        //    inside the isLocal branch below, so the production GitHub Pages
+        //    build can never enter App Check debug mode.
+        //
+        // ⚠️ ACTION REQUIRED: paste YOUR reCAPTCHA Enterprise SITE KEY into
+        //    RECAPTCHA_ENTERPRISE_SITE_KEY. It is the value shown in Google Cloud
+        //    → Security → reCAPTCHA Enterprise → your WEB key for
+        //    coldlogic144-prog.github.io (NOT the secret key, NOT a Gemini key).
+        //    Until this placeholder is replaced, App Check stays uninitialized
+        //    and Firebase AI Logic will reject every chat message.
         const RECAPTCHA_ENTERPRISE_SITE_KEY = "REPLACE_WITH_RECAPTCHA_ENTERPRISE_SITE_KEY";
 
         const isLocal =
@@ -3065,28 +3075,43 @@
 
         if (!siteKeyIsSet) {
             console.error(
-                'Ledger AI / App Check: reCAPTCHA Enterprise site key is not configured yet. ' +
-                'Add your site key (for coldlogic144-prog.github.io) to the ' +
-                'RECAPTCHA_ENTERPRISE_SITE_KEY constant above.'
+                'App Check is NOT initialized: RECAPTCHA_ENTERPRISE_SITE_KEY is still the placeholder. ' +
+                'Open Google Cloud → Security → reCAPTCHA Enterprise (or the Firebase console App Check page) ' +
+                'and copy the SITE KEY of the WEB key for coldlogic144-prog.github.io into the constant above, ' +
+                'then redeploy. No App Check token will be sent until you do.'
             );
-        } else if (isLocal) {
-            // Firebase App Check Debug Provider (development only). The SDK
-            // generates a debug token, logs it to the browser console, and uses
-            // it instead of reCAPTCHA. Register that token under
-            // Firebase Console → App Check → Apps → Manage debug tokens.
-            self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
-
-            initializeAppCheck(firebaseApp, {
-                provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
-                isTokenAutoRefreshEnabled: true
-            });
         } else {
-            // Firebase App Check reCAPTCHA Enterprise provider (GitHub Pages
-            // production build).
-            initializeAppCheck(firebaseApp, {
-                provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
-                isTokenAutoRefreshEnabled: true
-            });
+            console.log("App Check initializing...");
+            console.log("App Check provider:", isLocal ? "Firebase Debug Provider (localhost)" : "reCAPTCHA Enterprise (production)");
+            console.log("App Check hostname:", location.hostname);
+
+            try {
+                if (isLocal) {
+                    // Localhost / VS Code Live Server ONLY. Enables the debug
+                    // provider: the SDK generates a debug token, prints it to this
+                    // console, and uses it in place of reCAPTCHA. Register it under
+                    // Firebase Console → App Check → Apps → mmmut → Manage debug tokens.
+                    // Master gate: this line is unreachable on the GitHub Pages
+                    // production build, so production can never enable debug mode.
+                    self.FIREBASE_APPCHECK_DEBUG_TOKEN = true;
+                }
+
+                // One initialization call for both environments. On localhost the
+                // debug token above takes precedence internally (the SDK exchanges
+                // the debug token and never calls the provider); on GitHub Pages no
+                // debug token exists, so the reCAPTCHA Enterprise provider is used.
+                initializeAppCheck(firebaseApp, {
+                    provider: new ReCaptchaEnterpriseProvider(RECAPTCHA_ENTERPRISE_SITE_KEY),
+                    isTokenAutoRefreshEnabled: true
+                });
+
+                console.log("App Check initialized:", isLocal ? "debug provider (localhost)" : "reCAPTCHA Enterprise (production)");
+            } catch (error) {
+                console.error("App Check initialization failed:", error);
+                console.error("Code:", error?.code);
+                console.error("Message:", error?.message);
+                throw error;
+            }
         }
 
         const auth = getAuth(firebaseApp);
@@ -7876,6 +7901,12 @@
                 if (error.message) {
                     const msg = String(error.message);
                     if (/app.?check|attest|INVALID_APP_CREDENTIAL|UNAUTHENTICATED|UNAVAILABLE/i.test(msg)) {
+                        // Log the real App Check error from generateContent so the
+                        // browser console always shows the actual Firebase reason.
+                        console.error(
+                            'Ledger AI: generateContent received an App Check error.',
+                            { code: error?.code || error?.name, message: msg, error }
+                        );
                         errorMsg = 'App Check rejected the request. On GitHub Pages: confirm the reCAPTCHA Enterprise site key for this domain is configured in the Firebase console (App Check). On localhost: register the debug token shown in the browser console (Firebase Console → App Check → Manage debug tokens).';
                     } else if (/permission|auth|403|access denied/i.test(msg)) {
                         errorMsg =
