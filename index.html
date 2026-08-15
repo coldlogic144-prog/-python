@@ -5299,8 +5299,8 @@
             // Check if roll number already assigned to another user
             const usersSnap = await getDocs(usersCollection);
             const duplicate = usersSnap.docs.find(d => {
-                const d = d.data();
-                return d.rollNumber === rollNumber && d.uid !== uid;
+                const docData = userDoc.data();
+                return docData.rollNumber === rollNumber && docData.uid !== uid;
             });
             if (duplicate) {
                 showError('adminError', 'This roll number is already linked to another account.');
